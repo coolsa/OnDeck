@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "on_deck",
   "version": "${version}",
 
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "On Deck!",
+  "description": "Read and write data and audio to tapes via computers or redstone!",
   "authors": [
-    "Me!"
+    "coolsa"
   ],
   "contact": {
     "homepage": "https://fabricmc.net/",
@@ -19,19 +19,18 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
+      "xyz.coolsa.ondeck.OnDeck"
     ]
   },
   "mixins": [
     "modid.mixins.json"
   ],
-
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",
     "minecraft": "1.16.x"
   },
   "suggests": {
-    "another-mod": "*"
+    "computercraft": "*"
   }
 }
