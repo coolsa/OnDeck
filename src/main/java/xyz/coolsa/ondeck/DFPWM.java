@@ -8,10 +8,11 @@ also the main() function takes unsigned 8-bit data and converts it to suit
 */
 
 public class DFPWM {
-	private final int RESP_INC = 1;
-	private final int RESP_DEC = 1;
-	private final int RESP_PREC = 10;
-	private final int LPF_STRENGTH = 140;
+	private final int RESP_INC;
+	private final int RESP_DEC;
+	private final int RESP_PREC;
+	private final int LPF_STRENGTH;
+	private final boolean dfpwm_old;
 
 	private int response = 0;
 	private int level = 0;
@@ -20,31 +21,47 @@ public class DFPWM {
 	private int flastlevel = 0;
 	private int lpflevel = 0;
 
-	public DFPWM() {
+	public DFPWM(boolean newdfpwm) {
+		dfpwm_old = !newdfpwm;
+		if (newdfpwm) {
+			RESP_INC = 1;
+			RESP_DEC = 1;
+			RESP_PREC = 10;
+			LPF_STRENGTH = 140;
+		} else {
+			RESP_INC = 7;
+			RESP_DEC = 20;
+			RESP_PREC = 8;
+			LPF_STRENGTH = 100;
+		}
 	}
 
-	private void ctx_update(boolean curbit) {
+	private void ctx_update(boolean curbit)
+	{
 		int target = (curbit ? 127 : -128);
-		int nlevel = (level + ((response * (target - level) + (1 << (RESP_PREC - 1))) >> RESP_PREC));
-		if (nlevel == level && level != target)
+		int nlevel = (level + ((response*(target - level)
+			+ (1<<(RESP_PREC-1)))>>RESP_PREC));
+		if(nlevel == level && level != target)
 			nlevel += (curbit ? 1 : -1);
 
 		int rtarget, rdelta;
-		if (curbit == lastbit) {
-			rtarget = (1 << RESP_PREC) - 1;
+		if(curbit == lastbit)
+		{
+			rtarget = (1<<RESP_PREC)-1;
 			rdelta = RESP_INC;
 		} else {
 			rtarget = 0;
 			rdelta = RESP_DEC;
 		}
 
-		int nresponse = response;
-		if (response != rtarget)
+		int nresponse = response + (dfpwm_old ? ((rdelta * (rtarget - response) + 128)>>8) : 0);
+		if(nresponse == response && response != rtarget)
 			nresponse += (curbit == lastbit ? 1 : -1);
 
-		if (RESP_PREC > 8) {
-			if (nresponse < (2 << (RESP_PREC - 8)))
-				nresponse = (2 << (RESP_PREC - 8));
+		if(RESP_PREC > 8)
+		{
+			if(nresponse < (2<<(RESP_PREC-8)))
+				nresponse = (2<<(RESP_PREC-8));
 		}
 
 		response = nresponse;
@@ -52,28 +69,35 @@ public class DFPWM {
 		level = nlevel;
 	}
 
-	public void decompress(byte[] dest, byte[] src, int destoffs, int srcoffs, int len) {
-		for (int i = 0; i < len; i++) {
+	public void decompress(byte[] dest, byte[] src, int destoffs, int srcoffs, int len)
+	{
+		for(int i = 0; i < len; i++)
+		{
 			byte d = src[srcoffs++];
-			for (int j = 0; j < 8; j++) {
+//			if(i == 0) {
+//				System.out.print(d + "\t\t" + this.response + "\t\t"+this.flastlevel+ "\t\t" + this.level + "\n");
+//			}
+			for(int j = 0; j < 8; j++)
+			{
 				// apply context
-				boolean curbit = ((d & 1) != 0);
+				boolean curbit = ((d&1) != 0);
 				boolean lastbit = this.lastbit;
 				ctx_update(curbit);
 				d >>= 1;
 
 				// apply noise shaping
-				int blevel = (byte) (curbit == lastbit ? level : ((flastlevel + level + 1) >> 1));
+				int blevel = (byte)(curbit == lastbit
+					? level
+					: ((flastlevel + level + 1)>>1));
 				flastlevel = level;
 
 				// apply low-pass filter
-				lpflevel += ((LPF_STRENGTH * (blevel - lpflevel) + 0x80) >> 8);
-				
-				
-				dest[destoffs++] = (byte) (((int) lpflevel & 0xFF) ^ 0x80);
+				lpflevel += ((LPF_STRENGTH * (blevel - lpflevel) + 0x80)>>8);
+				dest[destoffs++] = (byte)(lpflevel);
 			}
 		}
 	}
+
 
 	public void compress(byte[] dest, byte[] src, int destoffs, int srcoffs, int len) {
 		for (int i = 0; i < len; i++) {
@@ -101,8 +125,8 @@ public class DFPWM {
 		byte[] pcmout = new byte[1024];
 		byte[] cmpdata = new byte[128];
 
-		DFPWM incodec = new DFPWM();
-		DFPWM outcodec = new DFPWM();
+		DFPWM incodec = new DFPWM(true);
+		DFPWM outcodec = new DFPWM(true);
 
 		if (mode == 0) {
 			while (true) {
