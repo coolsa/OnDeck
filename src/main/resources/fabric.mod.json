@@ -20,6 +20,9 @@
   "entrypoints": {
     "main": [
       "xyz.coolsa.ondeck.OnDeck"
+    ],
+    "client": [
+      "xyz.coolsa.ondeck.OnDeckClient"
     ]
   },
   "mixins": [

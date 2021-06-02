@@ -9,6 +9,7 @@ import net.minecraft.client.sound.SoundInstanceListener;
 import net.minecraft.client.sound.SoundListener;
 import net.minecraft.client.sound.SoundManager;
 import net.minecraft.client.sound.SoundSystem;
+import net.minecraft.client.sound.TickableSoundInstance;
 import net.minecraft.sound.SoundCategory;
 
 import java.util.List;
@@ -49,6 +50,9 @@ public interface SoundSystemAccessor {
 	@Accessor("sounds")
 	public Multimap<SoundCategory, SoundInstance> getSounds();
 
+	@Accessor("tickingSounds")
+	public List<TickableSoundInstance> getTickingSounds();
+	
 	@Accessor("listener")
 	public SoundListener getListener();
 

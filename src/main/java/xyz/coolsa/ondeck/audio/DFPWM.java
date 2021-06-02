@@ -1,4 +1,4 @@
-package xyz.coolsa.ondeck;
+package xyz.coolsa.ondeck.audio;
 /*
 DFPWM1a implementation in Java
 operates on 8-bit signed PCM data and little-endian DFPWM data
