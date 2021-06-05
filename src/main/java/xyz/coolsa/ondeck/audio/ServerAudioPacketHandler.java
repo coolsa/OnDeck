@@ -95,21 +95,21 @@ public class ServerAudioPacketHandler {
 //		InputStream input = null;
 		PacketByteBuf buf = PacketByteBufs.create();
 //		if (input == null) {
-		InputStream input = new FileInputStream("/home/cloud/Code/Java/OnDeck/src/main/resources/assets/sound.dfpwm");
+		InputStream input = new FileInputStream("/home/cloud/Code/Java/OnDeck/src/main/resources/assets/NY_Bacon_Pancakes.dfpwm");
 //		}
 		int soundId = streamNo;
 		float vol = 1.0F;
 		float pitch = 1.0F;
 		int entityId = playerEntity.getEntityId();
-		long[] test = new long[2];
+		long[] test = new long[5];
 		buf.writeInt(soundId);
 		buf.writeFloat(vol);
 		buf.writeFloat(pitch);
-//		test[0] = new BlockPos(0, 56, 0).asLong();
-		test[1] = new BlockPos(10, 56, 0).asLong();
-		test[0] = new BlockPos(-10, 56, 0).asLong();
-//		test[3] = new BlockPos(0, 56, 10).asLong();
-//		test[4] = new BlockPos(0, 56, -10).asLong();
+		test[0] = new BlockPos(0, 56, 0).asLong();
+		test[1] = new BlockPos(100, 56, 0).asLong();
+		test[2] = new BlockPos(-10, 56, 0).asLong();
+		test[3] = new BlockPos(0, 56, 10).asLong();
+		test[4] = new BlockPos(0, 56, -10).asLong();
 		buf.writeLongArray(test);
 		currentPackets.put(soundId, new Pair<Integer, PacketByteBuf>(1, buf));
 		for (ServerPlayerEntity player : PlayerLookup.around((ServerWorld) world, playerEntity.getBlockPos(), 500))

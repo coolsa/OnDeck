@@ -1,5 +1,6 @@
 package xyz.coolsa.ondeck.audio;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,9 +22,12 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import xyz.coolsa.ondeck.OnDeckConstants;
+import xyz.coolsa.ondeck.mixin.SoundManagerAccessor;
+import xyz.coolsa.ondeck.mixin.SoundSystemAccessor;
 
 /**
  * This function implements the client recieving part of packets.
+ * 
  * @author cloud
  *
  */
@@ -119,7 +123,7 @@ public class ClientAudioPacketHandler {
 		float pitch = buf.readFloat();
 		long[] blockPosLong = buf.readLongArray(null);
 		ArrayList<BlockPos> blockPos = new ArrayList<BlockPos>();
-		for(long l : blockPosLong) {
+		for (long l : blockPosLong) {
 			blockPos.add(BlockPos.fromLong(l));
 		}
 		client.execute(() -> {
@@ -141,9 +145,8 @@ public class ClientAudioPacketHandler {
 					// otherwise we go ahead and load the stream we have.
 					stream = (DfpwmAudioStream) playingStreams.get(soundId).getLeft();
 				}
-				SoundInstance soundInst = new BlockTapeSoundInstance(
-						new SoundEvent(new Identifier("ondeck:tape_play")), SoundCategory.RECORDS, vol,
-						pitch, blockPos);
+				SoundInstance soundInst = new BlockTapeSoundInstance(new SoundEvent(new Identifier("ondeck:tape_play")),
+						SoundCategory.RECORDS, vol, pitch, blockPos);
 				Channel.SourceManager cf = AudioHandler.playSound(soundInst, "Subtitles! Wowzers!", stream);
 				cf.run(source -> {
 //					source.setAttenuation(Float.MAX_VALUE);
@@ -163,6 +166,12 @@ public class ClientAudioPacketHandler {
 		byte[] data = buf.readByteArray();
 //		System.out.println("got data");
 		client.execute(() -> {
+			//lets see if we are too far away to hear.
+			SoundInstance instance = this.playingStreams.get(soundId).getRight();
+			if (Math.sqrt(client.player.squaredDistanceTo(instance.getX(), instance.getY(), instance.getZ())) >= 100) {
+				((SoundManagerAccessor) (MinecraftClient.getInstance().getSoundManager())).getSoundSystem().stop(instance);
+				return;
+			}
 			if (playingStreams.get(soundId) == null || playingStreams.get(soundId).getLeft() == null
 					|| !((DfpwmAudioStream) playingStreams.get(soundId).getLeft()).isOpen()) {
 				// this would be cause for us to send a response via handler to get them to send
@@ -174,7 +183,7 @@ public class ClientAudioPacketHandler {
 				}
 				stream.addPacket(blank, blank.length);
 				stream.addPacket(data, data.length);
-				this.playingStreams.put(soundId, new Pair<AudioStream,SoundInstance>(stream, null));
+				this.playingStreams.put(soundId, new Pair<AudioStream, SoundInstance>(stream, null));
 				PacketByteBuf request = PacketByteBufs.create();
 				request.writeInt(soundId);
 				responseSender.sendPacket(OnDeckConstants.DFPWM_STREAM_CONT, request);
@@ -196,9 +205,9 @@ public class ClientAudioPacketHandler {
 		if (playingStreams.get(soundId) == null || playingStreams.get(soundId).getRight() == null) {
 			return;
 		}
-		for(long l : blockPosLong) {
+		for (long l : blockPosLong) {
 			BlockPos pos = BlockPos.fromLong(l);
-			((BlockTapeSoundInstance) playingStreams.get(soundId).getRight()).toggleBlock(pos);
+			
 		}
 	}
 }
