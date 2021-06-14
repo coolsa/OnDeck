@@ -15,7 +15,7 @@ import net.minecraft.util.math.Vec3d;
 public class BlockTapeSoundInstance extends EntityTrackingSoundInstance {
 	List<BlockPos> blockPos;
 	Entity player;
-	double trueVol;
+	float trueVol;
 	Channel.SourceManager source;
 
 	public BlockTapeSoundInstance(SoundEvent sound, SoundCategory soundCategory, float volume, float pitch,
@@ -53,8 +53,14 @@ public class BlockTapeSoundInstance extends EntityTrackingSoundInstance {
 		// loop through all the block positions
 		for (BlockPos pos : blockPos) {
 			// start by getting the squared distance between the player and the block.
-			double squareDistance = pos.getSquaredDistance(player.x, player.y, player.z, false);
-			double weight = 1.0 / (1.0 + squareDistance);
+			double squareDistance = pos.getSquaredDistance(player.x-0.5, player.y, player.z-0.5, false);
+			if(squareDistance == 0) {
+				this.x = pos.getX();
+				this.y = pos.getY();
+				this.z = pos.getZ();
+				this.volume = this.trueVol;
+			}
+			double weight = 1.0 / (squareDistance);
 			dirX = dirX * weightTotal + pos.getX() * weight;
 			dirY = dirY * weightTotal + pos.getY() * weight;
 			dirZ = dirZ * weightTotal + pos.getZ() * weight;
@@ -75,7 +81,7 @@ public class BlockTapeSoundInstance extends EntityTrackingSoundInstance {
 	@Override
 	public void tick() {
 //		System.out.println("ticming");
-		if (this.player.removed) {
+		if (this.player.isRemoved()) {
 			this.setDone();
 			return;
 		}

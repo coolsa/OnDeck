@@ -100,13 +100,13 @@ public class ServerAudioPacketHandler {
 		int soundId = streamNo;
 		float vol = 1.0F;
 		float pitch = 1.0F;
-		int entityId = playerEntity.getEntityId();
+		int entityId = playerEntity.getId();
 		long[] test = new long[5];
 		buf.writeInt(soundId);
 		buf.writeFloat(vol);
 		buf.writeFloat(pitch);
 		test[0] = new BlockPos(0, 56, 0).asLong();
-		test[1] = new BlockPos(100, 56, 0).asLong();
+		test[1] = new BlockPos(20, 56, 0).asLong();
 		test[2] = new BlockPos(-10, 56, 0).asLong();
 		test[3] = new BlockPos(0, 56, 10).asLong();
 		test[4] = new BlockPos(0, 56, -10).asLong();

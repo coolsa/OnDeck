@@ -53,10 +53,12 @@ public class ClientAudioPacketHandler {
 				(client, handler, buf, responseSender) -> {
 					this.receiveDfpwmData(client, handler, buf, responseSender);
 				});
+		// This will update a block stream with added or removed blocks.
 		ClientPlayNetworking.registerGlobalReceiver(OnDeckConstants.DFPWM_BLOCK_UPDATE,
 				(client, handler, buf, responseSender) -> {
 					this.receiveDfpwmUpdate(client, handler, buf, responseSender);
 				});
+		// This will stop a stream.
 		ClientPlayNetworking.registerGlobalReceiver(OnDeckConstants.DFPWM_STOP_PLAY,
 				(client, handler, buf, responseSender) -> {
 					this.receiveDfpwmStop(client, handler, buf, responseSender);
@@ -98,10 +100,10 @@ public class ClientAudioPacketHandler {
 				}
 				SoundInstance soundInst = new MovingTapeSoundInstance(
 						new SoundEvent(new Identifier("ondeck:tape_play")), SoundCategory.RECORDS, client.world, volume,
-						pitch, entityId, client.player.getEntityId() == entityId);
+						pitch, entityId, client.player.getId() == entityId);
 				Channel.SourceManager cf = AudioHandler.playSound(soundInst, "Subtitles! Wowzers!", stream);
 
-				if (client.player.getEntityId() == entityId) {
+				if (client.player.getId() == entityId) {
 					cf.run(source -> {
 						source.setRelative(true);
 					});
@@ -116,6 +118,14 @@ public class ClientAudioPacketHandler {
 		});
 	}
 
+	/**
+	 * A list of blocks that are playing a DFPWM stream, which should stream.
+	 * 
+	 * @param client
+	 * @param handler
+	 * @param buf
+	 * @param responseSender
+	 */
 	private void receiveDfpwmBlock(MinecraftClient client, ClientPlayNetworkHandler handler, PacketByteBuf buf,
 			PacketSender responseSender) {
 		int soundId = buf.readInt();
@@ -160,16 +170,25 @@ public class ClientAudioPacketHandler {
 		});
 	}
 
+	/**
+	 * Handle new DFPWM audio data, adding it, stopping if out of range, etc.
+	 * 
+	 * @param client
+	 * @param handler
+	 * @param buf
+	 * @param responseSender
+	 */
 	private void receiveDfpwmData(MinecraftClient client, ClientPlayNetworkHandler handler, PacketByteBuf buf,
 			PacketSender responseSender) {
 		int soundId = buf.readInt();
 		byte[] data = buf.readByteArray();
 //		System.out.println("got data");
 		client.execute(() -> {
-			//lets see if we are too far away to hear.
+			// lets see if we are too far away to hear.
 			SoundInstance instance = this.playingStreams.get(soundId).getRight();
 			if (Math.sqrt(client.player.squaredDistanceTo(instance.getX(), instance.getY(), instance.getZ())) >= 100) {
-				((SoundManagerAccessor) (MinecraftClient.getInstance().getSoundManager())).getSoundSystem().stop(instance);
+				((SoundManagerAccessor) (MinecraftClient.getInstance().getSoundManager())).getSoundSystem()
+						.stop(instance);
 				return;
 			}
 			if (playingStreams.get(soundId) == null || playingStreams.get(soundId).getLeft() == null
@@ -193,11 +212,34 @@ public class ClientAudioPacketHandler {
 		});
 	}
 
+	/**
+	 * Stop a requested stream.
+	 * 
+	 * @param client
+	 * @param handler
+	 * @param buf
+	 * @param responseSender
+	 */
 	private void receiveDfpwmStop(MinecraftClient client, ClientPlayNetworkHandler handler, PacketByteBuf buf,
 			PacketSender responseSender) {
 		int soundId = buf.readInt();
+		client.execute(() -> {
+			if (this.playingStreams.get(soundId) == null)
+				return;
+			SoundInstance instance = this.playingStreams.get(soundId).getRight();
+			if (instance == null)
+				return;
+			((SoundManagerAccessor) (MinecraftClient.getInstance().getSoundManager())).getSoundSystem().stop(instance);
+		});
 	}
 
+	/**
+	 * Update a block stream with a list of new blocks.
+	 * @param client
+	 * @param handler
+	 * @param buf
+	 * @param responseSender
+	 */
 	private void receiveDfpwmUpdate(MinecraftClient client, ClientPlayNetworkHandler handler, PacketByteBuf buf,
 			PacketSender responseSender) {
 		int soundId = buf.readInt();
@@ -207,7 +249,7 @@ public class ClientAudioPacketHandler {
 		}
 		for (long l : blockPosLong) {
 			BlockPos pos = BlockPos.fromLong(l);
-			
+
 		}
 	}
 }

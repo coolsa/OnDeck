@@ -28,7 +28,7 @@ public class MovingTapeSoundInstance extends EntityTrackingSoundInstance {
 			float pitch, int entityID, boolean isClient) {
 		super(sound, soundCategory, volume, pitch, world.getEntityById(entityID));
 		if (isClient) {
-			this.field_18935 = true;
+			this.looping = true;
 			this.x=0;
 			this.y=0;
 			this.z=0;
@@ -37,7 +37,7 @@ public class MovingTapeSoundInstance extends EntityTrackingSoundInstance {
 
 	@Override
 	public void tick() {
-		if (!this.field_18935)
+		if (!this.looping)
 			super.tick();
 	}
 
